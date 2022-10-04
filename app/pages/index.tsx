@@ -98,6 +98,16 @@ const freshShoe = () => {
   return shoe
 }
 
+const bestHand = (totals) => {
+  // debugger;
+  if (totals.length === 1) {
+    return totals[0]
+  }
+  return totals.reduce((acc, cur) => {
+    if (cur > acc && cur <= 21) return cur
+  }, 0)
+}
+
 const Home: BlitzPage = () => {
   const [shoe, setShoe] = useState(freshShoe())
 
@@ -108,6 +118,7 @@ const Home: BlitzPage = () => {
   const [doubleDisabled, setDoubleDisabled] = useState(true)
   const [standDisabled, setStandDisabled] = useState(true)
   const [winLose, setWinLose] = useState<null | String>(null)
+  const playerTotal = useMemo(() => calcHandTotal(player), [player])
 
   const onDeal = useCallback(() => {
     setWinLose(null)
@@ -120,7 +131,11 @@ const Home: BlitzPage = () => {
     setDealer([peek(shoe, 1), peek(shoe, 3)])
     setShoe((prev) => prev.slice(4))
     setDealDisabled(true)
-  }, [shoe])
+    // if(playerTotal.some((total) => total === 21)) {
+    //   debugger;
+    //   onStand();
+    // }
+  }, [shoe, playerTotal])
 
   const onHit = useCallback(() => {
     setPlayer((prev) => [...prev, peek(shoe)])
@@ -162,7 +177,6 @@ const Home: BlitzPage = () => {
     onStand()
   }, [shoe])
 
-  const playerTotal = useMemo(() => calcHandTotal(player), [player])
   const dealerTotal = useMemo(() => calcHandTotal(dealer), [dealer])
   const dealerHasBlackjack = useCallback(
     () => dealerTotal.some((total) => total === 21) && dealer.length === 2,
@@ -205,14 +219,30 @@ const Home: BlitzPage = () => {
     setShoe((prev) => prev.slice(peekIndex))
 
     setDealDisabled(false)
+
+    if (dealerBusted()) {
+      setWinLose("You win!")
+    } else if (playerBusted()) {
+      setWinLose("You lose")
+    } else {
+      setWinLose(
+        bestHand(playerTotal) > bestHand(dealerTotal)
+          ? "You win!"
+          : bestHand(playerTotal) < bestHand(dealerTotal)
+          ? "You lose"
+          : "Push"
+      )
+    }
   }, [dealerTotal, dealerHasBlackjack, shoe, playerTotal])
 
   useEffect(() => {
     if (playerHasBlackjack() && !dealerHasBlackjack()) {
       disableAllPlayerActions()
       setDealDisabled(false)
+      setWinLose("You win!")
     } else if (playerBusted()) {
       disableAllPlayerActionsButDeal()
+      setWinLose("You lose")
     }
   }, [playerTotal, dealerHasBlackjack, playerBusted, playerHasBlackjack])
 
@@ -220,6 +250,7 @@ const Home: BlitzPage = () => {
     if (!playerHasBlackjack() && dealerHasBlackjack()) {
       disableAllPlayerActions()
       setDealDisabled(false)
+      setWinLose("You lose")
     }
   }, [playerTotal, dealerHasBlackjack, shoe, playerHasBlackjack])
 
@@ -227,6 +258,7 @@ const Home: BlitzPage = () => {
     if (playerHasBlackjack() && dealerHasBlackjack()) {
       disableAllPlayerActions()
       setDealDisabled(false)
+      setWinLose("Push")
     }
   }, [playerTotal, dealerHasBlackjack, playerHasBlackjack])
 
