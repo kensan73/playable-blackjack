@@ -1,57 +1,13 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Image, Link, BlitzPage, useMutation, Routes } from "blitz"
 import Layout from "app/core/layouts/Layout"
-import { useCurrentUser } from "app/core/hooks/useCurrentUser"
-import logout from "app/auth/mutations/logout"
-import logo from "public/logo.png"
-import { use } from "ast-types"
+import { RenderedCard } from "../components/Card"
 
 /*
  * This file is just for a pleasant getting started page for your new app.
  * You can delete everything in here and start from scratch if you like.
  */
-
-const UserInfo = () => {
-  const currentUser = useCurrentUser()
-  const [logoutMutation] = useMutation(logout)
-
-  if (currentUser) {
-    return (
-      <>
-        <button
-          className="button small"
-          onClick={async () => {
-            await logoutMutation()
-          }}
-        >
-          Logout
-        </button>
-        <div>
-          User id: <code>{currentUser.id}</code>
-          <br />
-          User role: <code>{currentUser.role}</code>
-        </div>
-      </>
-    )
-  } else {
-    return (
-      <>
-        <Link href={Routes.SignupPage()}>
-          <a className="button small">
-            <strong>Sign Up</strong>
-          </a>
-        </Link>
-        <Link href={Routes.LoginPage()}>
-          <a className="button small">
-            <strong>Login</strong>
-          </a>
-        </Link>
-      </>
-    )
-  }
-}
-
-interface Card {
+export interface Card {
   value: string
   suit: string
 }
@@ -69,6 +25,7 @@ const getValue = ({ value }: Card) => {
 }
 
 const isAce = (card) => getValue(card) === 1
+const aceCount = (hand: Card[]) => hand.filter((card) => card.value === "A").length
 
 const calcHandTotal = (hand: Card[]) => {
   let total = 0
@@ -77,67 +34,72 @@ const calcHandTotal = (hand: Card[]) => {
   })
 
   if (hand.some((card) => isAce(card))) {
-    return [total, total + 10]
+    const retval = [total]
+    for (let i = 0; i !== aceCount(hand); i++) {
+      retval.push(total + 10 * (i + 1))
+    }
+    return retval
+    // return [total, total + 10]
   }
   return [total]
 }
 
-const Home: BlitzPage = () => {
-  const [shoe, setShoe] = useState(
-    (() => {
-      const tempdeck = new Array(13).fill(-1).map((_, index) => {
-        if (index === 0) {
-          return {
-            value: "A",
-          }
-        } else if (index >= 1 && index <= 9) {
-          return {
-            value: `${index + 1}`,
-          }
-        } else {
-          if (index === 10) {
-            return {
-              value: "J",
-            }
-          } else if (index === 11) {
-            return {
-              value: "Q",
-            }
-          } else {
-            return {
-              value: "K",
-            }
-          }
+const freshShoe = () => {
+  const tempdeck = new Array(13).fill(-1).map((_, index) => {
+    if (index === 0) {
+      return {
+        value: "A",
+      }
+    } else if (index >= 1 && index <= 9) {
+      return {
+        value: `${index + 1}`,
+      }
+    } else {
+      if (index === 10) {
+        return {
+          value: "J",
         }
-      })
-
-      const shoe = ["Spades", "Clubs", "Hearts", "Diamonds"].reduce((acc: Card[], suit) => {
-        const fulldeck = tempdeck.map(({ value }) => ({ value, suit: suit }))
-        return [
-          ...acc,
-          ...fulldeck.slice(),
-          ...fulldeck.slice(),
-          ...fulldeck.slice(),
-          ...fulldeck.slice(),
-          ...fulldeck.slice(),
-          ...fulldeck.slice(),
-        ]
-      }, [])
-
-      const swap = (a, b, shoe) => {
-        const temp = shoe[a]
-        shoe[a] = shoe[b]
-        shoe[b] = temp
+      } else if (index === 11) {
+        return {
+          value: "Q",
+        }
+      } else {
+        return {
+          value: "K",
+        }
       }
+    }
+  })
 
-      for (let i = 0; i !== shoe.length; i++) {
-        const b = Math.floor(Math.random() * shoe.length - 1)
-        swap(i, b, shoe)
-      }
+  const shoe = ["Spades", "Clubs", "Hearts", "Diamonds"].reduce((acc: Card[], suit) => {
+    const fulldeck = tempdeck.map(({ value }) => ({ value, suit: suit }))
+    return [
+      ...acc,
+      ...fulldeck.slice(),
+      ...fulldeck.slice(),
+      ...fulldeck.slice(),
+      ...fulldeck.slice(),
+      ...fulldeck.slice(),
+      ...fulldeck.slice(),
+    ]
+  }, [])
 
-      return shoe
-    })()
-  )
+  const swap = (a, b, shoe) => {
+    const temp = shoe[a]
+    shoe[a] = shoe[b]
+    shoe[b] = temp
+  }
+
+  for (let i = 0; i !== shoe.length; i++) {
+    const b = Math.floor(Math.random() * shoe.length - 1)
+    swap(i, b, shoe)
+  }
+
+  return shoe
+}
+
+const Home: BlitzPage = () => {
+  const [shoe, setShoe] = useState(freshShoe())
 
   const [player, setPlayer] = useState<Card[] | []>([])
   const [dealer, setDealer] = useState<Card[] | []>([])
@@ -145,23 +107,29 @@ const Home: BlitzPage = () => {
   const [hitDisabled, setHitDisabled] = useState(true)
   const [doubleDisabled, setDoubleDisabled] = useState(true)
   const [standDisabled, setStandDisabled] = useState(true)
+  const [winLose, setWinLose] = useState<null | String>(null)
 
-  const onDeal = () => {
+  const onDeal = useCallback(() => {
+    setWinLose(null)
+    if (shoe.length <= 75) {
+      console.log("Reshuffling")
+      setShoe(freshShoe)
+    }
     enableAllPlayerActions()
     setPlayer([peek(shoe), peek(shoe, 2)])
     setDealer([peek(shoe, 1), peek(shoe, 3)])
     setShoe((prev) => prev.slice(4))
     setDealDisabled(true)
-  }
+  }, [shoe])
 
-  const onHit = () => {
+  const onHit = useCallback(() => {
     setPlayer((prev) => [...prev, peek(shoe)])
     setShoe((prev) => prev.slice(1))
     if (calcHandTotal(player).every((total) => total > 21)) {
       disableAllPlayerActions()
       setDealDisabled(false)
     }
-  }
+  }, [shoe, player])
 
   const disableAllPlayerActions = () => {
     setHitDisabled(true)
@@ -187,10 +155,12 @@ const Home: BlitzPage = () => {
     setStandDisabled(false)
   }
 
-  const onDouble = () => {
-    setPlayer([peek(shoe)])
-    setShoe((prev) => prev.slice(4))
-  }
+  const onDouble = useCallback(() => {
+    setPlayer((prev) => [...prev, peek(shoe)])
+    setShoe((prev) => prev.slice(1))
+
+    onStand()
+  }, [shoe])
 
   const playerTotal = useMemo(() => calcHandTotal(player), [player])
   const dealerTotal = useMemo(() => calcHandTotal(dealer), [dealer])
@@ -214,7 +184,10 @@ const Home: BlitzPage = () => {
   const onStand = useCallback(() => {
     disableAllPlayerActions()
 
-    if (dealerHasBlackjack()) return
+    if (dealerHasBlackjack()) {
+      setWinLose("You lose")
+      return
+    }
 
     // while (dealerTotal.some((total) => total < 17)) {
     //   setDealer((prev) => [...prev, peek(shoe)])
@@ -232,7 +205,7 @@ const Home: BlitzPage = () => {
     setShoe((prev) => prev.slice(peekIndex))
 
     setDealDisabled(false)
-  }, [dealerTotal, dealerHasBlackjack, shoe])
+  }, [dealerTotal, dealerHasBlackjack, shoe, playerTotal])
 
   useEffect(() => {
     if (playerHasBlackjack() && !dealerHasBlackjack()) {
@@ -259,19 +232,30 @@ const Home: BlitzPage = () => {
 
   return (
     <div>
-      <div style={{ border: "1px dotted red", marginBottom: "20px" }}>
+      <div
+        style={{
+          border: "1px dotted red",
+          marginBottom: "20px",
+          display: "grid",
+          gridAutoFlow: "column",
+          justifyContent: "start",
+        }}
+      >
         {dealer.length > 0 &&
           dealer.map((card, index) =>
             isDisableAllPlayerActions() ? (
-              <div key={card}>
-                {card.value} of {card.suit}
+              <div key={Math.random().toString(19).substr(2, 9)}>
+                <RenderedCard {...card} />
               </div>
             ) : index === 0 ? (
-              <div key={card}>
-                {card.value} of {card.suit}
+              <div key={Math.random().toString(19).substr(2, 9)}>
+                <RenderedCard {...card} />
               </div>
             ) : (
-              <div key={card}>facedown</div>
+              // <div key={Math.random().toString(19).substr(2, 9)}>[.......]</div>
+              <div key={Math.random().toString(19).substr(2, 9)}>
+                <RenderedCard />
+              </div>
             )
           )}
         {dealer.length > 0 && isDisableAllPlayerActions() && (
@@ -285,24 +269,31 @@ const Home: BlitzPage = () => {
         {dealerTotal.every((total) => total > 21) && <h3>BUSTED</h3>}
         {dealerHasBlackjack() && <h3>BLACKJACK</h3>}
       </div>
-      <div style={{ border: "1px dotted green" }}>
+      <div
+        style={{
+          border: "1px dotted green",
+          display: "grid",
+          gridAutoFlow: "column",
+          justifyContent: "start",
+        }}
+      >
         {player.length > 0 &&
           player.map((card) => (
-            <div key={card}>
-              {card.value} of {card.suit}
+            <div key={Math.random().toString(19).substr(2, 9)}>
+              <RenderedCard {...card} />
             </div>
           ))}
+        {player.length > 0 && (
+          <div>
+            Total:{" "}
+            {playerTotal.length > 1 && !playerBusted()
+              ? playerTotal.filter((total) => total <= 21).join(" or ")
+              : playerTotal.join(" or ")}
+          </div>
+        )}
+        {playerTotal.every((total) => total > 21) && <h3>BUSTED</h3>}
+        {playerHasBlackjack() && <h3>BLACKJACK</h3>}
       </div>
-      {player.length > 0 && (
-        <div>
-          Total:{" "}
-          {playerTotal.length > 1 && !playerBusted()
-            ? playerTotal.filter((total) => total <= 21).join(" or ")
-            : playerTotal.join(" or ")}
-        </div>
-      )}
-      {playerTotal.every((total) => total > 21) && <h3>BUSTED</h3>}
-      {playerHasBlackjack() && <h3>BLACKJACK</h3>}
       <button onClick={onDeal} disabled={dealDisabled}>
         Deal
       </button>
@@ -323,6 +314,7 @@ const Home: BlitzPage = () => {
         Stand
       </button>
       {/*<button onClick={onSplit}>Split</button>*/}
+      {winLose && <h2>{winLose}</h2>}
     </div>
   )
 }
