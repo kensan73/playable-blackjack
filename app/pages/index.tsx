@@ -51,18 +51,6 @@ const UserInfo = () => {
   }
 }
 
-const useFirstTime = (func: () => void) => {
-  const [first, setFirst] = useState(false)
-
-  useEffect(() => {
-    if (first) return
-
-    setFirst(true)
-  }, [])
-
-  func()
-}
-
 interface Card {
   value: string
   suit: string
