@@ -170,13 +170,6 @@ const Home: BlitzPage = () => {
     setStandDisabled(false)
   }
 
-  const onDouble = useCallback(() => {
-    setPlayer((prev) => [...prev, peek(shoe)])
-    setShoe((prev) => prev.slice(1))
-
-    onStand()
-  }, [shoe, onStand])
-
   const dealerTotal = useMemo(() => calcHandTotal(dealer), [dealer])
   const dealerHasBlackjack = useCallback(
     () => dealerTotal.some((total) => total === 21) && dealer.length === 2,
@@ -234,6 +227,13 @@ const Home: BlitzPage = () => {
       )
     }
   }, [dealerTotal, dealerHasBlackjack, shoe, playerTotal, dealerBusted, playerBusted])
+
+  const onDouble = useCallback(() => {
+    setPlayer((prev) => [...prev, peek(shoe)])
+    setShoe((prev) => prev.slice(1))
+
+    onStand()
+  }, [shoe, onStand])
 
   useEffect(() => {
     if (playerHasBlackjack() && !dealerHasBlackjack()) {
