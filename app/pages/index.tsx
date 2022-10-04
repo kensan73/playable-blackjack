@@ -194,10 +194,22 @@ const Home: BlitzPage = () => {
 
   const playerTotal = useMemo(() => calcHandTotal(player), [player])
   const dealerTotal = useMemo(() => calcHandTotal(dealer), [dealer])
-  const dealerHasBlackjack = () => dealerTotal.some((total) => total === 21) && dealer.length === 2
-  const playerHasBlackjack = () => playerTotal.some((total) => total === 21) && player.length === 2
-  const dealerBusted = () => dealer.length > 0 && dealerTotal.every((total) => total > 21)
-  const playerBusted = () => player.length > 0 && playerTotal.every((total) => total > 21)
+  const dealerHasBlackjack = useCallback(
+    () => dealerTotal.some((total) => total === 21) && dealer.length === 2,
+    [dealerTotal, dealer]
+  )
+  const playerHasBlackjack = useCallback(
+    () => playerTotal.some((total) => total === 21) && player.length === 2,
+    [playerTotal, player]
+  )
+  const dealerBusted = useCallback(
+    () => dealer.length > 0 && dealerTotal.every((total) => total > 21),
+    [dealer, dealerTotal]
+  )
+  const playerBusted = useCallback(
+    () => player.length > 0 && playerTotal.every((total) => total > 21),
+    [player, playerTotal]
+  )
 
   const onStand = useCallback(() => {
     disableAllPlayerActions()
@@ -220,7 +232,7 @@ const Home: BlitzPage = () => {
     setShoe((prev) => prev.slice(peekIndex))
 
     setDealDisabled(false)
-  }, [dealerTotal])
+  }, [dealerTotal, dealerHasBlackjack, shoe])
 
   useEffect(() => {
     if (playerHasBlackjack() && !dealerHasBlackjack()) {
@@ -229,21 +241,21 @@ const Home: BlitzPage = () => {
     } else if (playerBusted()) {
       disableAllPlayerActionsButDeal()
     }
-  }, [playerTotal])
+  }, [playerTotal, dealerHasBlackjack, playerBusted, playerHasBlackjack])
 
   useEffect(() => {
     if (!playerHasBlackjack() && dealerHasBlackjack()) {
       disableAllPlayerActions()
       setDealDisabled(false)
     }
-  }, [playerTotal])
+  }, [playerTotal, dealerHasBlackjack, shoe, playerHasBlackjack])
 
   useEffect(() => {
     if (playerHasBlackjack() && dealerHasBlackjack()) {
       disableAllPlayerActions()
       setDealDisabled(false)
     }
-  }, [playerTotal])
+  }, [playerTotal, dealerHasBlackjack, playerHasBlackjack])
 
   return (
     <div>
