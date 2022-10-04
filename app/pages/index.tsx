@@ -135,7 +135,7 @@ const Home: BlitzPage = () => {
     //   debugger;
     //   onStand();
     // }
-  }, [shoe, playerTotal])
+  }, [shoe])
 
   const onHit = useCallback(() => {
     setPlayer((prev) => [...prev, peek(shoe)])
@@ -175,7 +175,7 @@ const Home: BlitzPage = () => {
     setShoe((prev) => prev.slice(1))
 
     onStand()
-  }, [shoe])
+  }, [shoe, onStand])
 
   const dealerTotal = useMemo(() => calcHandTotal(dealer), [dealer])
   const dealerHasBlackjack = useCallback(
@@ -233,7 +233,7 @@ const Home: BlitzPage = () => {
           : "Push"
       )
     }
-  }, [dealerTotal, dealerHasBlackjack, shoe, playerTotal])
+  }, [dealerTotal, dealerHasBlackjack, shoe, playerTotal, dealerBusted, playerBusted])
 
   useEffect(() => {
     if (playerHasBlackjack() && !dealerHasBlackjack()) {
