@@ -191,6 +191,11 @@ const Home: BlitzPage = () => {
       setShowResult(true)
     }
   }, [player])
+  useEffect(() => {
+    if (dealerHasBlackjack()) {
+      setShowResult(true)
+    }
+  }, [dealer])
   const onStand = useCallback(() => {
     disableAllPlayerActions()
 
