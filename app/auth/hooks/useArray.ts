@@ -15,6 +15,11 @@ export default function useArray(defaultValue) {
     setArray((a) => [...a.slice(0, index), newElement, ...a.slice(index + 1, a.length)])
   }
 
+  function updateWithPrev(func) {
+    // setArray((a) => [...a.slice(0, index), newElement, ...a.slice(index + 1, a.length)])
+    setArray(func)
+  }
+
   function remove(index) {
     setArray((a) => [...a.slice(0, index), ...a.slice(index + 1, a.length)])
   }
@@ -23,5 +28,5 @@ export default function useArray(defaultValue) {
     setArray([])
   }
 
-  return { array, set: setArray, push, filter, update, remove, clear }
+  return { array, set: setArray, push, filter, update, updateWithPrev, remove, clear }
 }

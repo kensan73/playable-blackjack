@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { BlitzPage } from "blitz"
+import {useCallback, useEffect, useMemo, useState} from "react"
+import {BlitzPage} from "blitz"
 import Layout from "app/core/layouts/Layout"
-import { Dealer } from "../auth/components/Dealer"
-import { Player } from "../auth/components/Player"
+import {Dealer} from "../auth/components/Dealer"
+import {Player} from "../auth/components/Player"
 import useArray from "../auth/hooks/useArray"
 
 /*
@@ -16,7 +16,7 @@ export interface Card {
 
 const peek = (arr, ind = 0) => arr[ind]
 
-const getValue = ({ value }: Card) => {
+const getValue = ({value}: Card) => {
   if (["J", "Q", "K"].some((val) => val === value)) {
     return 10
   } else if (value === "A") {
@@ -31,6 +31,8 @@ const aceCount = (hand: Card[]) => hand.filter((card) => card.value === "A").len
 
 const calcHandTotal = (hand: Card[]) => {
   let total = 0
+  if(hand == undefined) debugger;
+  if(hand.length === 0) return [0]
   hand.forEach((card) => {
     total += getValue(card)
   })
@@ -73,7 +75,7 @@ const freshShoe = () => {
   })
 
   const shoe = ["Spades", "Clubs", "Hearts", "Diamonds"].reduce((acc: Card[], suit) => {
-    const fullDeck = tempDeck.map(({ value }) => ({ value, suit: suit }))
+    const fullDeck = tempDeck.map(({value}) => ({value, suit: suit}))
     return [
       ...acc,
       ...fullDeck.slice(),
@@ -110,14 +112,14 @@ const bestHand = (totals) => {
 
 const Home: BlitzPage = () => {
   const [shoe, setShoe] = useState(freshShoe())
-  const { array: playerSpots, update: updatePlayerSpots } = useArray([[]])
+  const {array: playerSpots, update: updatePlayerSpots, updateWithPrev: updatePlayerSpotsWithPrev} = useArray([[]])
   const [currentPlayerSpot, setCurrentPlayerSpot] = useState(0)
 
   const numberOfPlayerSpots = useMemo(() => {
     return playerSpots.length
   }, [playerSpots])
 
-  const [player, setPlayer] = useState<Card[] | []>([])
+  // const [player, setPlayer] = useState<Card[] | []>([])
   const [dealer, setDealer] = useState<Card[] | []>([])
   const [dealDisabled, setDealDisabled] = useState(false)
   const [splitDisabled, setSplitDisabled] = useState(true)
@@ -125,9 +127,12 @@ const Home: BlitzPage = () => {
   const [doubleDisabled, setDoubleDisabled] = useState(true)
   const [standDisabled, setStandDisabled] = useState(true)
   const [showResult, setShowResult] = useState<boolean>(false)
-  const playerTotal = useMemo(() => calcHandTotal(player), [player])
+  // const playerTotal = useMemo(() => calcHandTotal(player), [player])
+  const playerTotal = useMemo(() => calcHandTotal(playerSpots[currentPlayerSpot]),
+    [currentPlayerSpot, playerSpots[currentPlayerSpot]])
 
-  const onSplit = () => {}
+  const onSplit = () => {
+  }
   const onDeal = useCallback(() => {
     setShowResult(false)
     if (shoe.length <= 75) {
@@ -135,14 +140,19 @@ const Home: BlitzPage = () => {
       setShoe(freshShoe)
     }
     enableAllPlayerActions()
-    setPlayer([peek(shoe), peek(shoe, 2)])
+    // setPlayer([peek(shoe), peek(shoe, 2)])
+    updatePlayerSpots(currentPlayerSpot, [peek(shoe), peek(shoe, 2)])
     setDealer([peek(shoe, 1), peek(shoe, 3)])
     setShoe((prev) => prev.slice(4))
     setDealDisabled(true)
   }, [shoe])
 
   const onHit = useCallback(() => {
-    setPlayer((prev) => [...prev, peek(shoe)])
+    // setPlayer((prev) => [...prev, peek(shoe)])
+    updatePlayerSpotsWithPrev((prev) =>
+      [...prev.slice(0, currentPlayerSpot),
+        [...prev[currentPlayerSpot], peek(shoe)],
+        ...prev.slice(currentPlayerSpot + 1, prev.length)])
     setShoe((prev) => prev.slice(1))
     setDoubleDisabled(true)
   }, [shoe])
@@ -176,26 +186,43 @@ const Home: BlitzPage = () => {
     () => dealerTotal.some((total) => total === 21) && dealer.length === 2,
     [dealerTotal, dealer]
   )
+  // const playerHasBlackjack = useCallback(
+  //   () => playerTotal.some((total) => total === 21) && player.length === 2,
+  //   [playerTotal, player]
+  // )
   const playerHasBlackjack = useCallback(
-    () => playerTotal.some((total) => total === 21) && player.length === 2,
-    [playerTotal, player]
+    () => playerTotal.some((total) => total === 21) &&
+      playerSpots[currentPlayerSpot].length === 2,
+    [playerTotal, playerSpots[currentPlayerSpot], currentPlayerSpot]
   )
   const dealerBusted = useCallback(
     () => dealer.length > 0 && dealerTotal.every((total) => total > 21),
     [dealer, dealerTotal]
   )
+  // const playerBusted = useCallback(
+  //   () => player.length > 0 && playerTotal.every((total) => total > 21),
+  //   [player, playerTotal]
+  // )
   const playerBusted = useCallback(
-    () => player.length > 0 && playerTotal.every((total) => total > 21),
-    [player, playerTotal]
+    () => playerSpots[currentPlayerSpot].length > 0 &&
+      playerTotal.every((total) => total > 21),
+    [currentPlayerSpot, playerSpots[currentPlayerSpot]]
   )
 
+  // useEffect(() => {
+  //   if (calcHandTotal(player).every((total) => total > 21)) {
+  //     disableAllPlayerActions()
+  //     setDealDisabled(false)
+  //     setShowResult(true)
+  //   }
+  // }, [player])
   useEffect(() => {
-    if (calcHandTotal(player).every((total) => total > 21)) {
+    if (calcHandTotal(playerSpots[currentPlayerSpot]).every((total) => total > 21)) {
       disableAllPlayerActions()
       setDealDisabled(false)
       setShowResult(true)
     }
-  }, [player])
+  }, [playerSpots[currentPlayerSpot]])
   useEffect(() => {
     if (dealerHasBlackjack()) {
       setShowResult(true)
@@ -224,18 +251,40 @@ const Home: BlitzPage = () => {
     setShowResult(true)
   }, [dealerTotal, dealerHasBlackjack, shoe])
 
+  // const onDouble = useCallback(() => {
+  //   setDoubleDisabled(true)
+  //   setShoe((prev) => prev.slice(1))
+  //   setPlayer((prev) => {
+  //     const totals = calcHandTotal([...prev, peek(shoe)])
+  //     if (totals.every((total) => total > 21)) {
+  //       setShowResult(true)
+  //     }
+  //     return [...prev, peek(shoe)]
+  //   })
+  //   onStand()
+  // }, [shoe, onStand])
   const onDouble = useCallback(() => {
     setDoubleDisabled(true)
     setShoe((prev) => prev.slice(1))
-    setPlayer((prev) => {
-      const totals = calcHandTotal([...prev, peek(shoe)])
+    // setPlayer((prev) => {
+    //   const totals = calcHandTotal([...prev, peek(shoe)])
+    //   if (totals.every((total) => total > 21)) {
+    //     setShowResult(true)
+    //   }
+    //   return [...prev, peek(shoe)]
+    // })
+    updatePlayerSpotsWithPrev((prev) => {
+      // const totals = calcHandTotal([...prev, peek(shoe)])
+      const totals = calcHandTotal([...prev[currentPlayerSpot], peek(shoe)])
       if (totals.every((total) => total > 21)) {
         setShowResult(true)
       }
-      return [...prev, peek(shoe)]
+      return [...prev.slice(0, currentPlayerSpot),
+        [...prev[currentPlayerSpot], peek(shoe)],
+        ...prev.slice(currentPlayerSpot+1, prev.length)];
     })
     onStand()
-  }, [shoe, onStand])
+  }, [shoe, onStand, currentPlayerSpot])
 
   useEffect(() => {
     if (playerHasBlackjack() && !dealerHasBlackjack()) {
@@ -269,10 +318,11 @@ const Home: BlitzPage = () => {
         dealerBusted={dealerBusted}
         dealerHasBlackjack={dealerHasBlackjack}
       />
-      {playerSpots.map(() => (
+      {playerSpots.map((playerSpot, index) => (
         <Player
           key={Math.random().toString(23).substr(2, 9)}
-          player={player}
+          // player={player}
+          player={playerSpots[index]}
           playerTotal={playerTotal}
           playerBusted={playerBusted}
           playerHasBlackjack={playerHasBlackjack}
