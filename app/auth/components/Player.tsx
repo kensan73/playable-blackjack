@@ -1,10 +1,11 @@
 import { RenderedCard } from "../../components/Card"
+import {playerBusted, playerHasBlackjack} from "../../pages";
 
 export const Player = ({
   player,
-  playerTotal,
-  playerBusted,
-  playerHasBlackjack,
+  currentPlayerTotal,
+  currentPlayerBusted,
+  currentPlayerHasBlackjack,
   onDeal,
   dealDisabled,
   onDouble,
@@ -48,19 +49,20 @@ export const Player = ({
         {player.length > 0 && (
           <div>
             Total:{" "}
-            {playerTotal.length > 1 && !playerBusted()
-              ? playerTotal.filter((total) => total <= 21).join(" or ")
-              : playerTotal.join(" or ")}
+            {calcHandTotal(player).length > 1 && !playerBusted(player)
+              ? calcHandTotal(player).filter((total) => total <= 21).join(" or ")
+              : calcHandTotal(player).join(" or ")}
           </div>
         )}
-        {playerTotal.every((total) => total > 21) && <h3>BUSTED</h3>}
-        {playerHasBlackjack() && <h3>BLACKJACK</h3>}
+        {calcHandTotal(player).every((total) => total > 21) && <h3>BUSTED</h3>}
+        {currentPlayerHasBlackjack() && <h3>BLACKJACK</h3>}
       </div>}
       <div>
         <button accessKey={'d'} onClick={onDeal} disabled={!spotActive || dealDisabled}>
           [D]eal
         </button>
-        <button accessKey={'o'} onClick={onDouble} disabled={!spotActive || doubleDisabled}>
+        <button accessKey={'o'} onClick={onDouble} disabled={!spotActive || doubleDisabled
+        || player.length < 2}>
           D[o]uble
         </button>
         <button
@@ -90,20 +92,20 @@ export const Player = ({
         {/*<button onClick={onSplit}>Split</button>*/}
         {spotActive && showResult && (
           <h2>
-            {playerHasBlackjack() && dealerHasBlackjack()
+            {playerHasBlackjack(player) && dealerHasBlackjack()
               ? "Push"
-              : playerHasBlackjack()
+              : playerHasBlackjack(player)
                 ? "You win"
                 : dealerHasBlackjack()
                   ? "You lose"
-                  : playerBusted()
+                  : playerBusted(player)
                     ? "You lose"
                     : dealerBusted()
                       ? "You win"
                       : `${
-                        bestHand(playerTotal) > bestHand(dealerTotal)
+                        bestHand(player) > bestHand(dealerTotal)
                           ? "You win"
-                          : bestHand(playerTotal) === bestHand(dealerTotal)
+                          : bestHand(player) === bestHand(dealerTotal)
                             ? "Push"
                             : "You lose"
                       }`}
