@@ -57,19 +57,21 @@ export const Player = ({
         {playerHasBlackjack() && <h3>BLACKJACK</h3>}
       </div>}
       <div>
-        <button onClick={onDeal} disabled={!spotActive || dealDisabled}>
-          Deal
+        <button accessKey={'d'} onClick={onDeal} disabled={!spotActive || dealDisabled}>
+          [D]eal
         </button>
-        <button onClick={onDouble} disabled={!spotActive || doubleDisabled}>
-          Double
+        <button accessKey={'o'} onClick={onDouble} disabled={!spotActive || doubleDisabled}>
+          D[o]uble
         </button>
         <button
+          accessKey={'p'}
           onClick={onSplit}
           disabled={!spotActive || showResult || !(player && player.length === 2 && player[0].value === player[1].value)}
         >
-          Split
+          S[p]lit
         </button>
         <button
+          accessKey={'h'}
           onClick={onHit}
           disabled={
             !spotActive ||
@@ -78,13 +80,15 @@ export const Player = ({
             calcHandTotal(player).every((total) => total > 21)
           }
         >
-          Hit
+          [H]it
         </button>
-        <button onClick={onStand} disabled={!spotActive || standDisabled}>
-          Stand
+        <button
+          accessKey={'s'}
+          onClick={onStand} disabled={!spotActive || standDisabled}>
+          [S]tand
         </button>
         {/*<button onClick={onSplit}>Split</button>*/}
-        {spotActive || showResult && (
+        {spotActive && showResult && (
           <h2>
             {playerHasBlackjack() && dealerHasBlackjack()
               ? "Push"

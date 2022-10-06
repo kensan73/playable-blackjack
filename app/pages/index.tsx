@@ -152,7 +152,9 @@ const Home: BlitzPage = () => {
     }
     enableAllPlayerActions()
     // setPlayer([peek(shoe), peek(shoe, 2)])
-    updatePlayerSpots(currentPlayerSpot, [peek(shoe), peek(shoe, 2)])
+    // updatePlayerSpots(currentPlayerSpot, [peek(shoe), peek(shoe, 2)])
+    updatePlayerSpotsWithPrev(() => [
+      [peek(shoe), peek(shoe, 2)]])
     setDealer([peek(shoe, 1), peek(shoe, 3)])
     setShoe((prev) => prev.slice(4))
     setDealDisabled(true)
@@ -232,8 +234,12 @@ const Home: BlitzPage = () => {
       disableAllPlayerActions()
       setDealDisabled(false)
       setShowResult(true)
+
+      if(currentPlayerSpot < playerSpots.length - 2) {
+        setCurrentPlayerSpot((prev) => prev + 1)
+      }
     }
-  }, [playerSpots[currentPlayerSpot]])
+  }, [playerSpots[currentPlayerSpot], playerSpots])
   useEffect(() => {
     if (dealerHasBlackjack()) {
       setShowResult(true)
@@ -299,10 +305,21 @@ const Home: BlitzPage = () => {
 
   useEffect(() => {
     if (playerHasBlackjack() && !dealerHasBlackjack()) {
-      disableAllPlayerActions()
-      setDealDisabled(false)
+      disableAllPlayerActionsButDeal()
+      if(currentPlayerSpot < playerSpots.length - 2) {
+        setCurrentPlayerSpot((prev) => prev + 1)
+        setDealDisabled(true)
+      } else {
+        setDealDisabled(false)
+      }
     } else if (playerBusted()) {
       disableAllPlayerActionsButDeal()
+      if(currentPlayerSpot < playerSpots.length - 2) {
+        setCurrentPlayerSpot((prev) => prev + 1)
+        setDealDisabled(true)
+      } else {
+        setDealDisabled(false)
+      }
     }
   }, [playerTotal, dealerHasBlackjack, playerBusted, playerHasBlackjack])
 
