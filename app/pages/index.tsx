@@ -118,10 +118,11 @@ const Home: BlitzPage = () => {
   const [doubleDisabled, setDoubleDisabled] = useState(true)
   const [standDisabled, setStandDisabled] = useState(true)
   const [winLose, setWinLose] = useState<null | String>(null)
+  const [showResult, setShowResult] = useState<boolean>(false)
   const playerTotal = useMemo(() => calcHandTotal(player), [player])
 
   const onDeal = useCallback(() => {
-    setWinLose(null)
+    setShowResult(false)
     if (shoe.length <= 75) {
       console.log("Reshuffling")
       setShoe(freshShoe)
@@ -140,10 +141,6 @@ const Home: BlitzPage = () => {
   const onHit = useCallback(() => {
     setPlayer((prev) => [...prev, peek(shoe)])
     setShoe((prev) => prev.slice(1))
-    if (calcHandTotal(player).every((total) => total > 21)) {
-      disableAllPlayerActions()
-      setDealDisabled(false)
-    }
   }, [shoe, player])
 
   const disableAllPlayerActions = () => {
@@ -188,11 +185,19 @@ const Home: BlitzPage = () => {
     [player, playerTotal]
   )
 
+  useEffect(() => {
+    if (calcHandTotal(player).every((total) => total > 21)) {
+      disableAllPlayerActions()
+      setDealDisabled(false)
+      setShowResult(true)
+    }
+  }, [player])
   const onStand = useCallback(() => {
     disableAllPlayerActions()
 
     if (dealerHasBlackjack()) {
-      setWinLose("You lose")
+      // setWinLose("You lose")
+      setShowResult(true)
       return
     }
 
@@ -213,19 +218,20 @@ const Home: BlitzPage = () => {
 
     setDealDisabled(false)
 
-    if (dealerBusted()) {
-      setWinLose("You win!")
-    } else if (playerBusted()) {
-      setWinLose("You lose")
-    } else {
-      setWinLose(
-        bestHand(playerTotal) > bestHand(dealerTotal)
-          ? "You win!"
-          : bestHand(playerTotal) < bestHand(dealerTotal)
-          ? "You lose"
-          : "Push"
-      )
-    }
+    setShowResult(true)
+    // if (dealerBusted()) {
+    //   setWinLose("You win 217!")
+    // } else if (playerBusted()) {
+    //   setWinLose("You lose 219")
+    // } else {
+    //   setWinLose(
+    //     bestHand(playerTotal) > bestHand(dealerTotal)
+    //       ? `You win 223! ${bestHand(playerTotal)}, ${bestHand(dealerTotal)}`
+    //       : bestHand(playerTotal) < bestHand(dealerTotal)
+    //       ? `You lose 225  ${bestHand(playerTotal)}, ${bestHand(dealerTotal)}`
+    //       : "Push"
+    //   )
+    // }
   }, [dealerTotal, dealerHasBlackjack, shoe, playerTotal, dealerBusted, playerBusted])
 
   const onDouble = useCallback(() => {
@@ -239,10 +245,10 @@ const Home: BlitzPage = () => {
     if (playerHasBlackjack() && !dealerHasBlackjack()) {
       disableAllPlayerActions()
       setDealDisabled(false)
-      setWinLose("You win!")
+      setWinLose("You win 242!")
     } else if (playerBusted()) {
       disableAllPlayerActionsButDeal()
-      setWinLose("You lose")
+      setWinLose("You lose 245")
     }
   }, [playerTotal, dealerHasBlackjack, playerBusted, playerHasBlackjack])
 
@@ -250,7 +256,7 @@ const Home: BlitzPage = () => {
     if (!playerHasBlackjack() && dealerHasBlackjack()) {
       disableAllPlayerActions()
       setDealDisabled(false)
-      setWinLose("You lose")
+      setWinLose("You lose 253")
     }
   }, [playerTotal, dealerHasBlackjack, shoe, playerHasBlackjack])
 
@@ -346,7 +352,21 @@ const Home: BlitzPage = () => {
         Stand
       </button>
       {/*<button onClick={onSplit}>Split</button>*/}
-      {winLose && <h2>{winLose}</h2>}
+      {showResult && (
+        <h2>
+          {playerHasBlackjack() && dealerHasBlackjack()
+            ? "Push"
+            : playerHasBlackjack()
+            ? "You win"
+            : dealerHasBlackjack()
+            ? "You lose"
+            : playerBusted()
+            ? "You lose"
+            : dealerBusted()
+            ? "You win"
+            : `You ${bestHand(playerTotal) > bestHand(dealerTotal ? "win" : "lose")}`}
+        </h2>
+      )}
     </div>
   )
 }
