@@ -58,7 +58,10 @@ export const Player = ({
       <button onClick={onDouble} disabled={doubleDisabled}>
         Double
       </button>
-      <button onClick={onSplit} disabled={splitDisabled}>
+      <button
+        onClick={onSplit}
+        disabled={showResult || !(player.length === 2 && player[0].value === player[1].value)}
+      >
         Split
       </button>
       <button

@@ -3,6 +3,7 @@ import { BlitzPage } from "blitz"
 import Layout from "app/core/layouts/Layout"
 import { Dealer } from "../auth/components/Dealer"
 import { Player } from "../auth/components/Player"
+import useArray from "../auth/hooks/useArray"
 
 /*
  * This file is just for a pleasant getting started page for your new app.
@@ -35,12 +36,11 @@ const calcHandTotal = (hand: Card[]) => {
   })
 
   if (hand.some((card) => isAce(card))) {
-    const retval = [total]
+    const totals = [total]
     for (let i = 0; i !== aceCount(hand); i++) {
-      retval.push(total + 10 * (i + 1))
+      totals.push(total + 10 * (i + 1))
     }
-    return retval
-    // return [total, total + 10]
+    return totals
   }
   return [total]
 }
@@ -110,6 +110,12 @@ const bestHand = (totals) => {
 
 const Home: BlitzPage = () => {
   const [shoe, setShoe] = useState(freshShoe())
+  const { array: playerSpots, update: updatePlayerSpots } = useArray([[]])
+  const [currentPlayerSpot, setCurrentPlayerSpot] = useState(0)
+
+  const numberOfPlayerSpots = useMemo(() => {
+    return playerSpots.length
+  }, [playerSpots])
 
   const [player, setPlayer] = useState<Card[] | []>([])
   const [dealer, setDealer] = useState<Card[] | []>([])
@@ -219,9 +225,15 @@ const Home: BlitzPage = () => {
   }, [dealerTotal, dealerHasBlackjack, shoe])
 
   const onDouble = useCallback(() => {
-    setPlayer((prev) => [...prev, peek(shoe)])
+    setDoubleDisabled(true)
     setShoe((prev) => prev.slice(1))
-
+    setPlayer((prev) => {
+      const totals = calcHandTotal([...prev, peek(shoe)])
+      if (totals.every((total) => total > 21)) {
+        setShowResult(true)
+      }
+      return [...prev, peek(shoe)]
+    })
     onStand()
   }, [shoe, onStand])
 
@@ -257,28 +269,31 @@ const Home: BlitzPage = () => {
         dealerBusted={dealerBusted}
         dealerHasBlackjack={dealerHasBlackjack}
       />
-      <Player
-        player={player}
-        playerTotal={playerTotal}
-        playerBusted={playerBusted}
-        playerHasBlackjack={playerHasBlackjack}
-        calcHandTotal={calcHandTotal}
-        onStand={onStand}
-        onDeal={onDeal}
-        standDisabled={standDisabled}
-        showResult={showResult}
-        dealerHasBlackjack={dealerHasBlackjack}
-        dealerBusted={dealerBusted}
-        bestHand={bestHand}
-        dealerTotal={dealerTotal}
-        dealDisabled={dealDisabled}
-        onDouble={onDouble}
-        doubleDisabled={doubleDisabled}
-        onHit={onHit}
-        hitDisabled={hitDisabled}
-        onSplit={onSplit}
-        splitDisabled={splitDisabled}
-      />
+      {playerSpots.map(() => (
+        <Player
+          key={Math.random().toString(23).substr(2, 9)}
+          player={player}
+          playerTotal={playerTotal}
+          playerBusted={playerBusted}
+          playerHasBlackjack={playerHasBlackjack}
+          calcHandTotal={calcHandTotal}
+          onStand={onStand}
+          onDeal={onDeal}
+          standDisabled={standDisabled}
+          showResult={showResult}
+          dealerHasBlackjack={dealerHasBlackjack}
+          dealerBusted={dealerBusted}
+          bestHand={bestHand}
+          dealerTotal={dealerTotal}
+          dealDisabled={dealDisabled}
+          onDouble={onDouble}
+          doubleDisabled={doubleDisabled}
+          onHit={onHit}
+          hitDisabled={hitDisabled}
+          onSplit={onSplit}
+          splitDisabled={splitDisabled}
+        />
+      ))}
     </div>
   )
 }
