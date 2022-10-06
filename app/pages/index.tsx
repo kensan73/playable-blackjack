@@ -103,11 +103,16 @@ const freshShoe = () => {
 
 const bestHand = (totals) => {
   if (totals.length === 1) {
+    console.log('best hand 106: ', totals[0])
     return totals[0]
   }
-  return totals.reduce((acc, cur) => {
+  const result = totals.reduce((acc, cur) => {
     if (cur > acc && cur <= 21) return cur
+    return acc
   }, 0)
+
+  console.log('best hand 113 of ' + totals + ' is ' + result)
+  return result
 }
 
 const Home: BlitzPage = () => {
@@ -132,6 +137,12 @@ const Home: BlitzPage = () => {
     [currentPlayerSpot, playerSpots[currentPlayerSpot]])
 
   const onSplit = () => {
+    updatePlayerSpotsWithPrev((prev) => ([
+      ...prev.slice(0, currentPlayerSpot),
+      [...prev[currentPlayerSpot][0]], // leave one card in current player spot
+      [...prev[currentPlayerSpot][1]], // put second card in next spot
+      ...prev.slice(currentPlayerSpot+2, prev.length)
+    ]))
   }
   const onDeal = useCallback(() => {
     setShowResult(false)
