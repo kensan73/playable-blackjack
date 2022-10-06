@@ -194,7 +194,7 @@ const Home: BlitzPage = () => {
     if (dealerHasBlackjack()) {
       setShowResult(true)
     }
-  }, [dealer])
+  }, [dealer, dealerHasBlackjack])
   const onStand = useCallback(() => {
     disableAllPlayerActions()
 
