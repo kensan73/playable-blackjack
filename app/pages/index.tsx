@@ -141,7 +141,7 @@ const Home: BlitzPage = () => {
   const onHit = useCallback(() => {
     setPlayer((prev) => [...prev, peek(shoe)])
     setShoe((prev) => prev.slice(1))
-  }, [shoe, player])
+  }, [shoe])
 
   const disableAllPlayerActions = () => {
     setHitDisabled(true)
@@ -232,7 +232,7 @@ const Home: BlitzPage = () => {
     //       : "Push"
     //   )
     // }
-  }, [dealerTotal, dealerHasBlackjack, shoe, playerTotal, dealerBusted, playerBusted])
+  }, [dealerTotal, dealerHasBlackjack, shoe])
 
   const onDouble = useCallback(() => {
     setPlayer((prev) => [...prev, peek(shoe)])
