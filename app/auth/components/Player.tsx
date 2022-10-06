@@ -21,7 +21,11 @@ export const Player = ({
   dealerTotal,
   onSplit,
   splitDisabled,
+  currentPlayerSpot,
+  playerSpot
 }) => {
+  const spotActive = currentPlayerSpot === playerSpot
+
   return (
     <div
       style={{
@@ -53,21 +57,22 @@ export const Player = ({
         {playerHasBlackjack() && <h3>BLACKJACK</h3>}
       </div>}
       <div>
-        <button onClick={onDeal} disabled={dealDisabled}>
+        <button onClick={onDeal} disabled={!spotActive || dealDisabled}>
           Deal
         </button>
-        <button onClick={onDouble} disabled={doubleDisabled}>
+        <button onClick={onDouble} disabled={!spotActive || doubleDisabled}>
           Double
         </button>
         <button
           onClick={onSplit}
-          disabled={showResult || !(player && player.length === 2 && player[0].value === player[1].value)}
+          disabled={!spotActive || showResult || !(player && player.length === 2 && player[0].value === player[1].value)}
         >
           Split
         </button>
         <button
           onClick={onHit}
           disabled={
+            !spotActive ||
             hitDisabled ||
             calcHandTotal(player).some((total) => total === 21) ||
             calcHandTotal(player).every((total) => total > 21)
@@ -75,11 +80,11 @@ export const Player = ({
         >
           Hit
         </button>
-        <button onClick={onStand} disabled={standDisabled}>
+        <button onClick={onStand} disabled={!spotActive || standDisabled}>
           Stand
         </button>
         {/*<button onClick={onSplit}>Split</button>*/}
-        {showResult && (
+        {spotActive || showResult && (
           <h2>
             {playerHasBlackjack() && dealerHasBlackjack()
               ? "Push"

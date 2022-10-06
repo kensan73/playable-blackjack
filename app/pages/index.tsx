@@ -139,8 +139,8 @@ const Home: BlitzPage = () => {
   const onSplit = () => {
     updatePlayerSpotsWithPrev((prev) => ([
       ...prev.slice(0, currentPlayerSpot),
-      [...prev[currentPlayerSpot][0]], // leave one card in current player spot
-      [...prev[currentPlayerSpot][1]], // put second card in next spot
+      [prev[currentPlayerSpot][0]], // leave one card in current player spot
+      [prev[currentPlayerSpot][1]], // put second card in next spot
       ...prev.slice(currentPlayerSpot+2, prev.length)
     ]))
   }
@@ -353,6 +353,8 @@ const Home: BlitzPage = () => {
           hitDisabled={hitDisabled}
           onSplit={onSplit}
           splitDisabled={splitDisabled}
+          currentPlayerSpot={currentPlayerSpot}
+          playerSpot={index}
         />
       ))}
     </div>
