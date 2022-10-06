@@ -1,7 +1,8 @@
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Image, Link, BlitzPage, useMutation, Routes } from "blitz"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { BlitzPage } from "blitz"
 import Layout from "app/core/layouts/Layout"
-import { RenderedCard } from "../components/Card"
+import { Dealer } from "../auth/components/Dealer"
+import { Player } from "../auth/components/Player"
 
 /*
  * This file is just for a pleasant getting started page for your new app.
@@ -45,7 +46,7 @@ const calcHandTotal = (hand: Card[]) => {
 }
 
 const freshShoe = () => {
-  const tempdeck = new Array(13).fill(-1).map((_, index) => {
+  const tempDeck = new Array(13).fill(-1).map((_, index) => {
     if (index === 0) {
       return {
         value: "A",
@@ -72,15 +73,15 @@ const freshShoe = () => {
   })
 
   const shoe = ["Spades", "Clubs", "Hearts", "Diamonds"].reduce((acc: Card[], suit) => {
-    const fulldeck = tempdeck.map(({ value }) => ({ value, suit: suit }))
+    const fullDeck = tempDeck.map(({ value }) => ({ value, suit: suit }))
     return [
       ...acc,
-      ...fulldeck.slice(),
-      ...fulldeck.slice(),
-      ...fulldeck.slice(),
-      ...fulldeck.slice(),
-      ...fulldeck.slice(),
-      ...fulldeck.slice(),
+      ...fullDeck.slice(),
+      ...fullDeck.slice(),
+      ...fullDeck.slice(),
+      ...fullDeck.slice(),
+      ...fullDeck.slice(),
+      ...fullDeck.slice(),
     ]
   }, [])
 
@@ -113,13 +114,14 @@ const Home: BlitzPage = () => {
   const [player, setPlayer] = useState<Card[] | []>([])
   const [dealer, setDealer] = useState<Card[] | []>([])
   const [dealDisabled, setDealDisabled] = useState(false)
+  const [splitDisabled, setSplitDisabled] = useState(true)
   const [hitDisabled, setHitDisabled] = useState(true)
   const [doubleDisabled, setDoubleDisabled] = useState(true)
   const [standDisabled, setStandDisabled] = useState(true)
-  const [winLose, setWinLose] = useState<null | String>(null)
   const [showResult, setShowResult] = useState<boolean>(false)
   const playerTotal = useMemo(() => calcHandTotal(player), [player])
 
+  const onSplit = () => {}
   const onDeal = useCallback(() => {
     setShowResult(false)
     if (shoe.length <= 75) {
@@ -131,15 +133,12 @@ const Home: BlitzPage = () => {
     setDealer([peek(shoe, 1), peek(shoe, 3)])
     setShoe((prev) => prev.slice(4))
     setDealDisabled(true)
-    // if(playerTotal.some((total) => total === 21)) {
-    //   debugger;
-    //   onStand();
-    // }
   }, [shoe])
 
   const onHit = useCallback(() => {
     setPlayer((prev) => [...prev, peek(shoe)])
     setShoe((prev) => prev.slice(1))
+    setDoubleDisabled(true)
   }, [shoe])
 
   const disableAllPlayerActions = () => {
@@ -200,15 +199,9 @@ const Home: BlitzPage = () => {
     disableAllPlayerActions()
 
     if (dealerHasBlackjack()) {
-      // setWinLose("You lose")
       setShowResult(true)
       return
     }
-
-    // while (dealerTotal.some((total) => total < 17)) {
-    //   setDealer((prev) => [...prev, peek(shoe)])
-    //   setShoe((prev) => prev.slice(1))
-    // }
 
     let peekIndex = 0
     let tempDealerTotal = [...dealerTotal]
@@ -223,19 +216,6 @@ const Home: BlitzPage = () => {
     setDealDisabled(false)
 
     setShowResult(true)
-    // if (dealerBusted()) {
-    //   setWinLose("You win 217!")
-    // } else if (playerBusted()) {
-    //   setWinLose("You lose 219")
-    // } else {
-    //   setWinLose(
-    //     bestHand(playerTotal) > bestHand(dealerTotal)
-    //       ? `You win 223! ${bestHand(playerTotal)}, ${bestHand(dealerTotal)}`
-    //       : bestHand(playerTotal) < bestHand(dealerTotal)
-    //       ? `You lose 225  ${bestHand(playerTotal)}, ${bestHand(dealerTotal)}`
-    //       : "Push"
-    //   )
-    // }
   }, [dealerTotal, dealerHasBlackjack, shoe])
 
   const onDouble = useCallback(() => {
@@ -249,10 +229,8 @@ const Home: BlitzPage = () => {
     if (playerHasBlackjack() && !dealerHasBlackjack()) {
       disableAllPlayerActions()
       setDealDisabled(false)
-      setWinLose("You win 242!")
     } else if (playerBusted()) {
       disableAllPlayerActionsButDeal()
-      setWinLose("You lose 245")
     }
   }, [playerTotal, dealerHasBlackjack, playerBusted, playerHasBlackjack])
 
@@ -260,7 +238,6 @@ const Home: BlitzPage = () => {
     if (!playerHasBlackjack() && dealerHasBlackjack()) {
       disableAllPlayerActions()
       setDealDisabled(false)
-      setWinLose("You lose 253")
     }
   }, [playerTotal, dealerHasBlackjack, shoe, playerHasBlackjack])
 
@@ -268,115 +245,40 @@ const Home: BlitzPage = () => {
     if (playerHasBlackjack() && dealerHasBlackjack()) {
       disableAllPlayerActions()
       setDealDisabled(false)
-      setWinLose("Push")
     }
   }, [playerTotal, dealerHasBlackjack, playerHasBlackjack])
 
   return (
     <div>
-      <div
-        style={{
-          border: "1px dotted red",
-          marginBottom: "20px",
-          display: "grid",
-          gridAutoFlow: "column",
-          justifyContent: "start",
-        }}
-      >
-        {dealer.length > 0 &&
-          dealer.map((card, index) =>
-            isDisableAllPlayerActions() ? (
-              <div key={Math.random().toString(19).substr(2, 9)}>
-                <RenderedCard {...card} />
-              </div>
-            ) : index === 0 ? (
-              <div key={Math.random().toString(19).substr(2, 9)}>
-                <RenderedCard {...card} />
-              </div>
-            ) : (
-              // <div key={Math.random().toString(19).substr(2, 9)}>[.......]</div>
-              <div key={Math.random().toString(19).substr(2, 9)}>
-                <RenderedCard />
-              </div>
-            )
-          )}
-        {dealer.length > 0 && isDisableAllPlayerActions() && (
-          <div>
-            Total:{" "}
-            {dealerTotal.length > 1 && !dealerBusted()
-              ? dealerTotal.filter((total) => total <= 21).join(" or ")
-              : dealerTotal.join(" or ")}
-          </div>
-        )}
-        {dealerTotal.every((total) => total > 21) && <h3>BUSTED</h3>}
-        {dealerHasBlackjack() && <h3>BLACKJACK</h3>}
-      </div>
-      <div
-        style={{
-          border: "1px dotted green",
-          display: "grid",
-          gridAutoFlow: "column",
-          justifyContent: "start",
-        }}
-      >
-        {player.length > 0 &&
-          player.map((card) => (
-            <div key={Math.random().toString(19).substr(2, 9)}>
-              <RenderedCard {...card} />
-            </div>
-          ))}
-        {player.length > 0 && (
-          <div>
-            Total:{" "}
-            {playerTotal.length > 1 && !playerBusted()
-              ? playerTotal.filter((total) => total <= 21).join(" or ")
-              : playerTotal.join(" or ")}
-          </div>
-        )}
-        {playerTotal.every((total) => total > 21) && <h3>BUSTED</h3>}
-        {playerHasBlackjack() && <h3>BLACKJACK</h3>}
-      </div>
-      <button onClick={onDeal} disabled={dealDisabled}>
-        Deal
-      </button>
-      <button onClick={onDouble} disabled={doubleDisabled}>
-        Double
-      </button>
-      <button
-        onClick={onHit}
-        disabled={
-          hitDisabled ||
-          calcHandTotal(player).some((total) => total === 21) ||
-          calcHandTotal(player).every((total) => total > 21)
-        }
-      >
-        Hit
-      </button>
-      <button onClick={onStand} disabled={standDisabled}>
-        Stand
-      </button>
-      {/*<button onClick={onSplit}>Split</button>*/}
-      {showResult && (
-        <h2>
-          {playerHasBlackjack() && dealerHasBlackjack()
-            ? "Push"
-            : playerHasBlackjack()
-            ? "You win"
-            : dealerHasBlackjack()
-            ? "You lose"
-            : playerBusted()
-            ? "You lose"
-            : dealerBusted()
-            ? "You win"
-            : `${
-                bestHand(playerTotal) > bestHand(dealerTotal)
-                  ? "You win"
-                  : bestHand(playerTotal) === bestHand(dealerTotal)
-                  ? "Push"
-                  : "You lose"
-              }`}
-        </h2>
-      )}
+      <Dealer
+        dealer={dealer}
+        isDisableAllPlayerActions={isDisableAllPlayerActions}
+        dealerTotal={dealerTotal}
+        dealerBusted={dealerBusted}
+        dealerHasBlackjack={dealerHasBlackjack}
+      />
+      <Player
+        player={player}
+        playerTotal={playerTotal}
+        playerBusted={playerBusted}
+        playerHasBlackjack={playerHasBlackjack}
+        calcHandTotal={calcHandTotal}
+        onStand={onStand}
+        onDeal={onDeal}
+        standDisabled={standDisabled}
+        showResult={showResult}
+        dealerHasBlackjack={dealerHasBlackjack}
+        dealerBusted={dealerBusted}
+        bestHand={bestHand}
+        dealerTotal={dealerTotal}
+        dealDisabled={dealDisabled}
+        onDouble={onDouble}
+        doubleDisabled={doubleDisabled}
+        onHit={onHit}
+        hitDisabled={hitDisabled}
+        onSplit={onSplit}
+        splitDisabled={splitDisabled}
+      />
     </div>
   )
 }
