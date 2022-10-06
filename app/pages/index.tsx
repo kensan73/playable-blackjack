@@ -99,7 +99,6 @@ const freshShoe = () => {
 }
 
 const bestHand = (totals) => {
-  // debugger;
   if (totals.length === 1) {
     return totals[0]
   }
@@ -364,7 +363,13 @@ const Home: BlitzPage = () => {
             ? "You lose"
             : dealerBusted()
             ? "You win"
-            : `You ${bestHand(playerTotal) > bestHand(dealerTotal ? "win" : "lose")}`}
+            : `${
+                bestHand(playerTotal) > bestHand(dealerTotal)
+                  ? "You win"
+                  : bestHand(playerTotal) === bestHand(dealerTotal)
+                  ? "Push"
+                  : "You lose"
+              }`}
         </h2>
       )}
     </div>
