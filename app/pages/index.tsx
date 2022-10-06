@@ -165,10 +165,15 @@ const Home: BlitzPage = () => {
 
   const onHit = useCallback(() => {
     // setPlayer((prev) => [...prev, peek(shoe)])
-    updatePlayerSpotsWithPrev((prev) =>
-      [...prev.slice(0, currentPlayerSpot),
-        [...prev[currentPlayerSpot], peek(shoe)],
-        ...prev.slice(currentPlayerSpot + 1, prev.length)])
+    updatePlayerSpotsWithPrev((prev) => {
+      const currentHand = [...prev[currentPlayerSpot], peek(shoe)]
+      if(!playerBusted(currentHand)) {
+        setStandDisabled(false);
+      }
+      return [...prev.slice(0, currentPlayerSpot),
+        currentHand,
+        ...prev.slice(currentPlayerSpot + 1, prev.length)];
+    })
     setShoe((prev) => prev.slice(1))
     setDoubleDisabled(true)
   }, [shoe, currentPlayerSpot])
@@ -340,6 +345,7 @@ const Home: BlitzPage = () => {
       } else {
         setDealDisabled(false)
       }
+      setShowResult(true);
     } else if (currentPlayerBusted()) {
       disableAllPlayerActionsButDeal()
       if(currentPlayerSpot < playerSpots.length - 2) {
@@ -348,6 +354,7 @@ const Home: BlitzPage = () => {
       } else {
         setDealDisabled(false)
       }
+      setShowResult(true);
     }
   }, [playerTotal, dealerHasBlackjack, currentPlayerBusted, currentPlayerHasBlackjack, currentPlayerSpot, playerSpots.length])
 

@@ -98,14 +98,14 @@ export const Player = ({
                 ? "You win"
                 : dealerHasBlackjack()
                   ? "You lose"
-                  : playerBusted(player)
+                  : playerBusted(calcHandTotal(player))
                     ? "You lose"
                     : dealerBusted()
                       ? "You win"
                       : `${
-                        bestHand(player) > bestHand(dealerTotal)
+                        bestHand(calcHandTotal(player)) > bestHand(dealerTotal)
                           ? "You win"
-                          : bestHand(player) === bestHand(dealerTotal)
+                          : bestHand(calcHandTotal(player)) === bestHand(dealerTotal)
                             ? "Push"
                             : "You lose"
                       }`}
