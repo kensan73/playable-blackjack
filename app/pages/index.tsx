@@ -231,7 +231,7 @@ const Home: BlitzPage = () => {
   //   [player, playerTotal]
   // )
   const currentPlayerBusted = useCallback(
-    () => playerSpots[currentPlayerSpot].length > 0 &&
+    () => playerSpots[currentPlayerSpot] && playerSpots[currentPlayerSpot].length > 0 &&
       playerTotal.every((total) => total > 21),
     [currentPlayerSpot, playerSpots, playerTotal]
   )
